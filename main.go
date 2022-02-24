@@ -1,11 +1,13 @@
 package main
 
 // #include <signal.h>
+// #include <stdio.h>
 //
 // extern void runFromC(int, int);
 //
 // static void sighandler(int signum, siginfo_t *si, void *ucontext)
 // {
+//	printf("%d signal recieved\n", signum);
 //	int signal = signum - SIGRTMIN;
 //	int button = si->si_value.sival_int;
 //	runFromC(signal, button);
@@ -92,7 +94,7 @@ func main() {
 	defer x.Close()
 	root := xproto.Setup(x).DefaultScreen(x).Root
 
-	for i := 0; i < len(blocks); i++ { // initialize blocks
+	for i := 0; i < len(blocks); i++ {
 		blocks[i].pos = i
 
 		if blocks[i].inSh {
@@ -102,7 +104,7 @@ func main() {
 		}
 
 		if blocks[i].upSig != 0 {
-			C.addSig(C.int(blocks[i].upSig))
+			C.addSig(C.int(34 + blocks[i].upSig))
 			signalMap[syscall.Signal(34+blocks[i].upSig)] = append(signalMap[syscall.Signal(34+blocks[i].upSig)], blocks[i])
 		}
 
