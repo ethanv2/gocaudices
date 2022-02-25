@@ -1,3 +1,13 @@
+# CLICKABILITY!
+I'm *trying* to implement clickablity. Please Help.
+
+FQA:
+	• Why cgo?: https://github.com/golang/go/issues/9764
+
+	• Does it work yet?: No.
+
+	• Why are you doing this?: challenge myself, finish a todo from 2 years ago, clout being the only other status monitor with a patch for it. GOCAUDICES>>>DWMBLOCKS
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/lordrusk/gocaudices)](https://goreportcard.com/report/github.com/lordrusk/gocaudices)
 
 # Simple dwmblocks alternative
