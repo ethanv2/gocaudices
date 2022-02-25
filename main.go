@@ -1,22 +1,28 @@
 package main
 
-// #include <signal.h>
-// #include <stdio.h>
-//
-// extern void runFromC(int, int);
-//
-// static void sighandler(int signum, siginfo_t *si, void *ucontext)
-// {
-//	printf("%d signal recieved\n", signum);
-//	int signal = signum - SIGRTMIN;
-//	int button = si->si_value.sival_int;
-//	runFromC(signal, button);
-// }
-//
-// static void addSig(int sig) {
-// 	struct sigaction sa = { .sa_sigaction = sighandler, .sa_flags = SA_SIGINFO|SA_ONSTACK };
-//	sigaction(sig, &sa, NULL);
-// }
+/*
+#include <stdio.h>
+#include <signal.h>
+#include "def.c"
+
+extern void runFromC(int, int);
+
+static void sigHandler(int signum, siginfo_t *si, void *ucontext) {
+	printf("%d signal recieved\n", signum);
+	int signal = signum - SIGRTMIN;
+	int button = si->si_value.sival_int;
+	runFromC(signal, button);
+}
+
+static void addTheSig(int sig) {
+	printf("added sig %d\n", sig);
+	static struct sigaction sa = { .sa_sigaction = sigHandler, .sa_flags = SA_ONSTACK };
+	// static struct sigaction sa = { .sa_sigaction = sigHandler, .sa_flags = SA_SIGINFO };
+	int e = sigaction(sig, &sa, NULL);
+	if(e != 0)
+	printf("Failed to add signal: %d\n", sig);
+}
+*/
 import "C"
 
 import (
@@ -87,6 +93,8 @@ func runFromC(signal, button C.int) {
 }
 
 func main() {
+	C.setbuf(C.stdout, nil) /* lets us get output from C printf without fflush(stdout) */
+
 	x, err := xgb.NewConn()
 	if err != nil {
 		log.Fatalf("Cannot connect to X: %s\n", err)
@@ -104,7 +112,7 @@ func main() {
 		}
 
 		if blocks[i].upSig != 0 {
-			C.addSig(C.int(34 + blocks[i].upSig))
+			C.addTheSig(C.int(34 + blocks[i].upSig))
 			signalMap[syscall.Signal(34+blocks[i].upSig)] = append(signalMap[syscall.Signal(34+blocks[i].upSig)], blocks[i])
 		}
 
