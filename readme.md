@@ -1,7 +1,11 @@
 # CLICKABILITY!
 I'm *trying* to implement clickablity. Please Help.
 
+As of latest commit, two signals are being added, and we can recieve these signals. On recieve, we get a segfault and a crash. `def.c` isn't needed right now but contains links and information on the rabbit hole I've been down.
+
 FQA:
+
+• Why are you trying to add?: https://dwm.suckless.org/patches/statuscmd
 
 • Why cgo?: https://github.com/golang/go/issues/9764
 
