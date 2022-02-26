@@ -7,8 +7,8 @@ var (
 
 	blocks = []block{
 		{cmd: "recicon", upSig: 9},
-		{cmd: "music", upSig: 11},
-		{cmd: "pacpackages", upSig: 8},
+		// {cmd: "music", upSig: 11},
+		// {cmd: "pacpackages", upSig: 8},
 		{cmd: "news", upSig: 6},
 		{cmd: "georona | cut -d' ' -f1,3", inSh: true, upInt: 18000, upSig: 19}, // example of command that is run in shell
 		{cmd: "torrent", upInt: 10, upSig: 7},

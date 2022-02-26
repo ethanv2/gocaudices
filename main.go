@@ -10,17 +10,23 @@ extern void runFromC(int, int);
 static void sigHandler(int signum, siginfo_t *si, void *ucontext) {
 	printf("%d signal recieved\n", signum);
 	int signal = signum - SIGRTMIN;
+	printf("10\n");
 	int button = si->si_value.sival_int;
+	printf("20\n");
 	runFromC(signal, button);
+	printf("30\n");
 }
 
-static void addTheSig(int sig) {
+static void addSig(int sig) {
 	printf("added sig %d\n", sig);
-	static struct sigaction sa = { .sa_sigaction = sigHandler, .sa_flags = SA_ONSTACK };
-	// static struct sigaction sa = { .sa_sigaction = sigHandler, .sa_flags = SA_SIGINFO };
+	// static struct sigaction sa = { .sa_sigaction = sigHandler, .sa_flags = SA_ONSTACK };
+	// printf("1\n");
+	static struct sigaction sa = { .sa_sigaction = sigHandler, .sa_flags = SA_SIGINFO };
 	int e = sigaction(sig, &sa, NULL);
+	// printf("2\n");
 	if(e != 0)
 	printf("Failed to add signal: %d\n", sig);
+	// printf("3\n");
 }
 */
 import "C"
@@ -31,7 +37,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	// "os/signal"
 	"strconv"
 	"strings"
 	"syscall"
@@ -51,7 +56,7 @@ type block struct {
 	pos  int
 }
 
-var updateChan = make(chan struct{})
+var updateChan = make(chan struct{}, len(blocks))
 var barBytesArr = make([][]byte, len(blocks))
 var signalMap = make(map[os.Signal][]block)
 
@@ -81,6 +86,7 @@ func (b *block) runBB(button int) {
 
 //export runFromC
 func runFromC(signal, button C.int) {
+	// crashes while trying to running this
 	fmt.Printf("signal: %d; button: %d\n", signal, button)
 	sig, butt := int(signal), int(button)
 	for _, b := range signalMap[syscall.Signal(sig)] {
@@ -93,7 +99,7 @@ func runFromC(signal, button C.int) {
 }
 
 func main() {
-	C.setbuf(C.stdout, nil) /* lets us get output from C printf without fflush(stdout) */
+	C.setbuf(C.stdout, nil)
 
 	x, err := xgb.NewConn()
 	if err != nil {
@@ -102,7 +108,9 @@ func main() {
 	defer x.Close()
 	root := xproto.Setup(x).DefaultScreen(x).Root
 
+	fmt.Printf("%d - %d\n\n", 0, len(blocks))
 	for i := 0; i < len(blocks); i++ {
+		// fmt.Printf("initializing block %+v\n", blocks[i])
 		blocks[i].pos = i
 
 		if blocks[i].inSh {
@@ -112,11 +120,17 @@ func main() {
 		}
 
 		if blocks[i].upSig != 0 {
-			C.addTheSig(C.int(34 + blocks[i].upSig))
+			fmt.Printf("Block `%s` sig `%d`->`%d` added using `C.addSig()`\n", blocks[i].cmd, blocks[i].upSig, blocks[i].upSig+34)
+			if _, err := C.addSig(C.int(34 + blocks[i].upSig)); err != nil {
+				fmt.Printf("Failed adding signal `%d`->`%d`: %s\n", blocks[i].upSig, blocks[i].upSig+34, err)
+			}
+			// fmt.Printf("01\n")
 			signalMap[syscall.Signal(34+blocks[i].upSig)] = append(signalMap[syscall.Signal(34+blocks[i].upSig)], blocks[i])
+			//fmt.Printf("02\n")
 		}
 
 		blocks[i].run()
+		// fmt.Printf("03\n")
 		if blocks[i].upInt != 0 {
 			go func(i int) {
 				for {
@@ -125,6 +139,7 @@ func main() {
 				}
 			}(i)
 		}
+		// fmt.Printf("Finished initializing `%s`\n", blocks[i].cmd)
 	}
 
 	go func() {
