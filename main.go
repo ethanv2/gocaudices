@@ -3,17 +3,23 @@ package main
 /*
 #include <stdio.h>
 #include <signal.h>
-#include "def.c"
 
-extern void runFromC(int, int);
+typedef struct {
+	int sig;
+	int button;
+} bridge;
+
+bridge kiss = {.sig = 0, .button = 0};
 
 static void sigHandler(int signum, siginfo_t *si, void *ucontext) {
 	printf("%d signal recieved\n", signum);
-	int signal = signum - SIGRTMIN;
+	// int signal = signum - SIGRTMIN;
 	printf("10\n");
 	int button = si->si_value.sival_int;
 	printf("20\n");
-	runFromC(signal, button);
+	// kiss.sig = signal;
+	kiss.sig = signum;
+	kiss.button = button;
 	printf("30\n");
 }
 
@@ -84,18 +90,26 @@ func (b *block) runBB(button int) {
 	updateChan <- struct{}{}
 }
 
-//export runFromC
-func runFromC(signal, button C.int) {
-	// crashes while trying to running this
-	fmt.Printf("signal: %d; button: %d\n", signal, button)
-	sig, butt := int(signal), int(button)
-	for _, b := range signalMap[syscall.Signal(sig)] {
-		if butt == 0 {
+func watchSignals() {
+watch:
+	for C.kiss.sig == C.int(0) {
+	}
+	fmt.Printf("signal: %d: button %d\n", C.kiss.sig, C.kiss.button)
+	sig, button := int(C.kiss.sig), int(C.kiss.button)
+	if button == 0 {
+		for _, b := range signalMap[syscall.Signal(sig)] {
 			b.run()
-		} else {
-			b.runBB(butt)
+		}
+	} else {
+		for _, b := range signalMap[syscall.Signal(sig)] {
+			b.runBB(button)
 		}
 	}
+
+	C.kiss.sig = C.int(0)
+	C.kiss.button = C.int(0)
+
+	goto watch
 }
 
 func main() {
@@ -158,5 +172,6 @@ func main() {
 		}
 	}()
 
-	select {}
+	watchSignals()
+	// select {}
 }

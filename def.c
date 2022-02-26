@@ -19,10 +19,20 @@ https://documentation.help/Golang/cgo.html < cgo basics
 https://people.kth.se/~johanmon/ose/assignments/signals.pdf <- nice pdf about C signals
 */
 
-/* from https://pkg.go.dev/cmd/cgo#hdr-C_references_to_Go:
-Using //export in a file places a restriction on the preamble: since it is copied into two different C output files, it must not contain any definitions, only declarations. If a file contains both definitions and declarations, then the two output files will produce duplicate symbols and the linker will fail. To avoid this, definitions must be placed in preambles in other files, or in C source files.
+/* cannot call a go function from the signal handler: segfaults: https://github.com/golang/go/issues/45499
+	"Unfortunately, C signal handlers can only call functions that
+	are async-signal-safe (https://man7.org/linux/man-pages/man7/signal-safety.7.html).
+	And Go code is never async-signal-safe. It is never going to be possible
+	to call a Go function from a C signal handler."
 */
-#include <signal.h>
+
+/* from https://pkg.go.dev/cmd/cgo#hdr-C_references_to_Go:
+	Using //export in a file places a restriction on the preamble: since it is copied into two different
+	C output files, it must not contain any definitions, only declarations. If a file contains both
+	definitions and declarations, then the two output files will produce duplicate symbols and the linker
+	will fail. To avoid this, definitions must be placed in preambles in other files, or in C source files.
+*/
+// #include <signal.h>
 
 /*
 extern void sigHandler(int signum, siginfo_t *si, void *udcontext);
